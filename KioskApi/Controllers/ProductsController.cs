@@ -21,13 +21,13 @@ namespace KioskApi.Controllers
         public IActionResult GetProducts()
         {
             var response = ToProductResponseList(products);
-            return Ok(products);
+            return Ok(response);
         }
 
         [HttpGet("{id}")]
         public IActionResult GetProductById(int id)
         {
-            var product = products.FirstOrDefault(p => p.Id == id);
+            var product = FindProductById(id);
 
             if (product == null)
             {
@@ -82,50 +82,71 @@ namespace KioskApi.Controllers
             return NoContent();
         }
 
-        //상품 ID  생성 로직
+        /// <summary>
+        /// 현재 상품 목록을 기준으로 다음 상품 ID를 생성합니다.
+        /// 기존 상품이 비어 있으면 최대 ID에 1을 더한 값을 반환하고,
+        /// 목록이 비어 있으면 1을 반환합니다.
+        /// </summary>
+        /// <returns>새 상품에 할당 할 ID 값</returns>
         private int GenerateNextProductId()
         {
+            /// <summary>
+            /// 전달 받은 ID와 일치하는 상품 엔티티를 조회 합니다.
+            /// </summary>
+            /// <param name="id">조회 할 상품 ID</param>
+            /// <reutrns>조회된 상품 엔티티, 없으면 null</reutrns>
             return products.Any() ? products.Max(p => p.Id) + 1 : 1;
         }
 
-        //기존 상품 객체의 정보(Name, Price)를 수정
+        /// <summary>
+        /// 기존 상품 엔티티의 이름과 가격 정보를 수정합니다.
+        /// </summary>
+        /// <param name="product"> 수정 할 기존 상품 엔티티</param>
+        /// <param name="request"> 수정 할 상품 정보가 담긴 요청 DTO</param>
         private void UpdateProductInfo(Product product, UpdateProductRequest request)
         {
             product.Name  = request.Name;
             product.Price = request.Price;
         }
 
-        //id로 상품 하나 찾기
+        /// <summary>
+        /// 전달 받은 ID와 일치하는 상품 엔티티를 조회합니다.
+        /// </summary>
+        /// <param name="id">조회 할 상품 ID</param>
+        /// <returns>조회된 상품 엔티티, 없으면 null</returns>
         private Product? FindProductById(int id)
         {
             return products.FirstOrDefault(p => p.Id == id);
         }
 
-        //id로 상품 하나 찾고 삭제
+        /// <summary>
+        /// 전달 받은 상품 엔티티를 목록에서 제거합니다
+        /// </summary>
+        /// <param name="product">삭제 할 상품 엔티티</param>
         private void RemoveProduct(Product product)
         {
             products.Remove(product);
         }
 
         /// <summary>
-        /// Product 엔티티를 클라이언트에 반환할 ProdcutResponse DTO로 변환합니다.
+        /// 상품 엔티티를 응답 DTO로 변환합니다.
         /// </summary>
-        /// <param name="product">응답 DTO로 변환할 상품 엔티티</param>
+        /// <param name="product">변환할 상품 엔티티</param>
         /// <returns>상품 응답 DTO</returns>
         private ProductResponse ToProductResponse(Product product)
         {
             return new ProductResponse
             {
-                Id = product.Id,
-                Name = product.Name,
+                Id    = product.Id,
+                Name  = product.Name,
                 Price = product.Price
             };
         }
 
         /// <summary>
-        /// Product 엔티티 목록을 클라이언트에 변환할 ProductResponse DTO 목록으로 변환합니다.
+        /// 상품 엔티티 List를 응답 DTO List로 변환합니다.
         /// </summary>
-        /// <param name="product">응답 DTO 목록으로 변환할 상품 엔티티 목록</param>
+        /// <param name="product">변환 할 상품 엔티티 목록</param>
         /// <returns>상품 응답 DTO 목록</returns>
         private List<ProductResponse> ToProductResponseList(List<Product> product)
         {
