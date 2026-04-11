@@ -20,11 +20,32 @@ namespace KioskApi.Controllers
             return Ok(products);
         }
 
+        [HttpGet("{id}")]
+        public IActionResult GetProductById(int id)
+        {
+            var product = products.FirstOrDefault(p => p.Id == id);
+
+            if (product == null)
+                return NotFound();
+
+            return Ok(product);
+        }
+
         [HttpPost]
         public IActionResult CreateProduct([FromBody] Product newProduct)
         {
+            newProduct.Id = GenerateNextProductId();
+
             products.Add(newProduct);
-            return Ok(newProduct);
+
+            return CreatedAtAction(nameof(GetProductById), new { id = newProduct.Id }, newProduct);
         }
+
+        #region 상품 ID  생성 로직
+        private int GenerateNextProductId()
+        {
+            return products.Any() ? products.Max(p => p.Id) + 1 : 1;
+        }
+        #endregion
     }
 }
