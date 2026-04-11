@@ -27,7 +27,9 @@ namespace KioskApi.Controllers
             var product = products.FirstOrDefault(p => p.Id == id);
 
             if (product == null)
+            {
                 return NotFound();
+            }
 
             return Ok(product);
         }
@@ -48,11 +50,28 @@ namespace KioskApi.Controllers
             var product = FindProductById(id);
 
             if (product == null)
+            {
                 return NotFound();
+            }
 
             UpdateProductInfo(product, updateProduct);
 
             return Ok(product);
+        }
+
+        [HttpDelete("{id}")]
+        public IActionResult DeleteProduct(int id)
+        {
+            var product = FindProductById(id);
+
+            if (product == null)
+            {
+                return NotFound();
+            }
+
+            RemoveProduct(product);
+
+            return NoContent();
         }
 
         //상품 ID  생성 로직
@@ -61,17 +80,23 @@ namespace KioskApi.Controllers
             return products.Any() ? products.Max(p => p.Id) + 1 : 1;
         }
         
+        //기존 상품 객체의 정보(Name, Price)를 수정
+        private void UpdateProductInfo(Product product, Product updateProduct)
+        {
+            product.Name  = updateProduct.Name;
+            product.Price = updateProduct.Price;
+        }
+
         //id로 상품 하나 찾기
         private Product? FindProductById(int id)
         {
             return products.FirstOrDefault(p => p.Id == id);
         }
 
-        //기존 상품 객체의 정보(Name, Price)를 수정
-        private void UpdateProductInfo(Product product, Product updateProduct)
+        //id로 상품 하나 찾고 삭제
+        private void RemoveProduct(Product product)
         {
-            product.Name  = updateProduct.Name;
-            product.Price = updateProduct.Price;
+            products.Remove(product);
         }
     }
 }
