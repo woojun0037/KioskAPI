@@ -12,5 +12,7 @@ namespace KioskApi.Models
 
         [Range(1, 100000, ErrorMessage = "가격은 1원 이상이어야 합니다.")] 
         public int Price { get; set; }
+
+        public string Category { get; set; } = "";
     }
 }

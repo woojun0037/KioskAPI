@@ -1,8 +1,12 @@
 ﻿using System.Net;
+using System.Diagnostics;
+
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+
 using KioskApi.Models;
 using KioskApi.Dtos;
-using System.Diagnostics;
+using KioskApi.Data;
 
 namespace KioskApi.Controllers
 {
@@ -10,24 +14,25 @@ namespace KioskApi.Controllers
     [Route("api/[controller]")]
     public class ProductsController : ControllerBase
     {
-        private static List<Product> products = new List<Product>
+        private readonly AppDbContext _context;
+
+        public ProductsController(AppDbContext context)
         {
-            new Product { Id = 1, Name = "아메리카노", Price = 1800},
-            new Product { Id = 2, Name = "카페라떼"  , Price = 2500},
-            new Product { Id = 3, Name = "카푸치노"  , Price = 3000}
-        };
+            _context = context;
+        }
 
         [HttpGet]
-        public IActionResult GetProducts()
+        public async Task<IActionResult> GetProducts()
         {
-            var response = ToProductResponseList(products);
+            var productList = await _context.Products.ToListAsync();
+            var response = ToProductResponseList(productList);
             return Ok(response);
         }
 
         [HttpGet("{id}")]
-        public IActionResult GetProductById(int id)
+        public async Task<IActionResult> GetProductById(int id)
         {
-            var product = FindProductById(id);
+            var product = await _context.Products.FirstOrDefaultAsync(p=> p.Id == id);
 
             if (product == null)
             {
@@ -38,24 +43,24 @@ namespace KioskApi.Controllers
         }
 
         [HttpPost]
-        public IActionResult CreateProduct([FromBody] CreateProductRequest request)
+        public async Task<IActionResult> CreateProduct([FromBody] CreateProductRequest request)
         {
             var newProduct = new Product
             {
-                Id = GenerateNextProductId(),
                 Name = request.Name,
                 Price = request.Price
             };
 
-            products.Add(newProduct);
+            _context.Products.Add(newProduct);
+            await _context.SaveChangesAsync();
 
             return CreatedAtAction(nameof(GetProductById), new { id = newProduct.Id }, ToProductResponse(newProduct));
         }
 
         [HttpPut("{id}")]
-        public IActionResult UpdateProduct(int id, [FromBody] UpdateProductRequest request)
+        public async Task<IActionResult> UpdateProduct(int id, [FromBody] UpdateProductRequest request)
         {
-            var product = FindProductById(id);
+            var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == id);
 
             if (product == null)
             {
@@ -64,38 +69,25 @@ namespace KioskApi.Controllers
 
             UpdateProductInfo(product, request);
 
+            await _context.SaveChangesAsync();
+
             return Ok(ToProductResponse(product));
         }
 
         [HttpDelete("{id}")]
-        public IActionResult DeleteProduct(int id)
+        public async Task<IActionResult> DeleteProduct(int id)
         {
-            var product = FindProductById(id);
+            var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == id);
 
             if (product == null)
             {
                 return NotFound();
             }
 
-            RemoveProduct(product);
+            _context.Products.Remove(product);
+            await _context.SaveChangesAsync();
 
             return NoContent();
-        }
-
-        /// <summary>
-        /// 현재 상품 목록을 기준으로 다음 상품 ID를 생성합니다.
-        /// 기존 상품이 비어 있으면 최대 ID에 1을 더한 값을 반환하고,
-        /// 목록이 비어 있으면 1을 반환합니다.
-        /// </summary>
-        /// <returns>새 상품에 할당 할 ID 값</returns>
-        private int GenerateNextProductId()
-        {
-            /// <summary>
-            /// 전달 받은 ID와 일치하는 상품 엔티티를 조회 합니다.
-            /// </summary>
-            /// <param name="id">조회 할 상품 ID</param>
-            /// <reutrns>조회된 상품 엔티티, 없으면 null</reutrns>
-            return products.Any() ? products.Max(p => p.Id) + 1 : 1;
         }
 
         /// <summary>
@@ -107,25 +99,6 @@ namespace KioskApi.Controllers
         {
             product.Name  = request.Name;
             product.Price = request.Price;
-        }
-
-        /// <summary>
-        /// 전달 받은 ID와 일치하는 상품 엔티티를 조회합니다.
-        /// </summary>
-        /// <param name="id">조회 할 상품 ID</param>
-        /// <returns>조회된 상품 엔티티, 없으면 null</returns>
-        private Product? FindProductById(int id)
-        {
-            return products.FirstOrDefault(p => p.Id == id);
-        }
-
-        /// <summary>
-        /// 전달 받은 상품 엔티티를 목록에서 제거합니다
-        /// </summary>
-        /// <param name="product">삭제 할 상품 엔티티</param>
-        private void RemoveProduct(Product product)
-        {
-            products.Remove(product);
         }
 
         /// <summary>
@@ -150,7 +123,7 @@ namespace KioskApi.Controllers
         /// <returns>상품 응답 DTO 목록</returns>
         private List<ProductResponse> ToProductResponseList(List<Product> product)
         {
-            return products.Select(product => ToProductResponse(product)).ToList();
+            return product.Select(product => ToProductResponse(product)).ToList();
         }
     }
 }
