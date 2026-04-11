@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Net;
+using Microsoft.AspNetCore.Mvc;
 using KioskApi.Models;
-using System.Net;
+using KioskApi.Dtos;
+using System.Diagnostics;
 
 namespace KioskApi.Controllers
 {
@@ -18,6 +20,7 @@ namespace KioskApi.Controllers
         [HttpGet]
         public IActionResult GetProducts()
         {
+            var response = ToProductResponseList(products);
             return Ok(products);
         }
 
@@ -31,21 +34,26 @@ namespace KioskApi.Controllers
                 return NotFound();
             }
 
-            return Ok(product);
+            return Ok(ToProductResponse(product));
         }
 
         [HttpPost]
-        public IActionResult CreateProduct([FromBody] Product newProduct)
+        public IActionResult CreateProduct([FromBody] CreateProductRequest request)
         {
-            newProduct.Id = GenerateNextProductId();
+            var newProduct = new Product
+            {
+                Id = GenerateNextProductId(),
+                Name = request.Name,
+                Price = request.Price
+            };
 
             products.Add(newProduct);
 
-            return CreatedAtAction(nameof(GetProductById), new { id = newProduct.Id }, newProduct);
+            return CreatedAtAction(nameof(GetProductById), new { id = newProduct.Id }, ToProductResponse(newProduct));
         }
 
         [HttpPut("{id}")]
-        public IActionResult UpdateProduct(int id, [FromBody] Product updateProduct)
+        public IActionResult UpdateProduct(int id, [FromBody] UpdateProductRequest request)
         {
             var product = FindProductById(id);
 
@@ -54,9 +62,9 @@ namespace KioskApi.Controllers
                 return NotFound();
             }
 
-            UpdateProductInfo(product, updateProduct);
+            UpdateProductInfo(product, request);
 
-            return Ok(product);
+            return Ok(ToProductResponse(product));
         }
 
         [HttpDelete("{id}")]
@@ -79,12 +87,12 @@ namespace KioskApi.Controllers
         {
             return products.Any() ? products.Max(p => p.Id) + 1 : 1;
         }
-        
+
         //기존 상품 객체의 정보(Name, Price)를 수정
-        private void UpdateProductInfo(Product product, Product updateProduct)
+        private void UpdateProductInfo(Product product, UpdateProductRequest request)
         {
-            product.Name  = updateProduct.Name;
-            product.Price = updateProduct.Price;
+            product.Name  = request.Name;
+            product.Price = request.Price;
         }
 
         //id로 상품 하나 찾기
@@ -97,6 +105,31 @@ namespace KioskApi.Controllers
         private void RemoveProduct(Product product)
         {
             products.Remove(product);
+        }
+
+        /// <summary>
+        /// Product 엔티티를 클라이언트에 반환할 ProdcutResponse DTO로 변환합니다.
+        /// </summary>
+        /// <param name="product">응답 DTO로 변환할 상품 엔티티</param>
+        /// <returns>상품 응답 DTO</returns>
+        private ProductResponse ToProductResponse(Product product)
+        {
+            return new ProductResponse
+            {
+                Id = product.Id,
+                Name = product.Name,
+                Price = product.Price
+            };
+        }
+
+        /// <summary>
+        /// Product 엔티티 목록을 클라이언트에 변환할 ProductResponse DTO 목록으로 변환합니다.
+        /// </summary>
+        /// <param name="product">응답 DTO 목록으로 변환할 상품 엔티티 목록</param>
+        /// <returns>상품 응답 DTO 목록</returns>
+        private List<ProductResponse> ToProductResponseList(List<Product> product)
+        {
+            return products.Select(product => ToProductResponse(product)).ToList();
         }
     }
 }
