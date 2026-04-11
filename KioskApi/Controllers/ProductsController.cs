@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using KioskApi.Models;
+using System.Net;
 
 namespace KioskApi.Controllers
 {
@@ -41,11 +42,36 @@ namespace KioskApi.Controllers
             return CreatedAtAction(nameof(GetProductById), new { id = newProduct.Id }, newProduct);
         }
 
-        #region 상품 ID  생성 로직
+        [HttpPut("{id}")]
+        public IActionResult UpdateProduct(int id, [FromBody] Product updateProduct)
+        {
+            var product = FindProductById(id);
+
+            if (product == null)
+                return NotFound();
+
+            UpdateProductInfo(product, updateProduct);
+
+            return Ok(product);
+        }
+
+        //상품 ID  생성 로직
         private int GenerateNextProductId()
         {
             return products.Any() ? products.Max(p => p.Id) + 1 : 1;
         }
-        #endregion
+        
+        //id로 상품 하나 찾기
+        private Product? FindProductById(int id)
+        {
+            return products.FirstOrDefault(p => p.Id == id);
+        }
+
+        //기존 상품 객체의 정보(Name, Price)를 수정
+        private void UpdateProductInfo(Product product, Product updateProduct)
+        {
+            product.Name  = updateProduct.Name;
+            product.Price = updateProduct.Price;
+        }
     }
 }
