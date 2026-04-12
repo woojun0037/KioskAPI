@@ -1,14 +1,16 @@
 using KioskApi.Data;
+using KioskApi.Services;
+
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite("Data Source=KioskApi.db"));
+builder.Services.AddScoped<IProductService, ProductService>();
 
 var app = builder.Build();
 

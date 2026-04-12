@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using KioskApi.Models;
 using KioskApi.Dtos;
 using KioskApi.Data;
+using KioskApi.Services;
 
 namespace KioskApi.Controllers
 {
@@ -14,116 +15,62 @@ namespace KioskApi.Controllers
     [Route("api/[controller]")]
     public class ProductsController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly IProductService _ProductService;
 
-        public ProductsController(AppDbContext context)
+        public ProductsController(IProductService productService)
         {
-            _context = context;
+            _ProductService = productService;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetProducts()
         {
-            var productList = await _context.Products.ToListAsync();
-            var response = ToProductResponseList(productList);
-            return Ok(response);
+            var respone = await _ProductService.GetProductsAsync();
+            return Ok(respone);
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetProductById(int id)
         {
-            var product = await _context.Products.FirstOrDefaultAsync(p=> p.Id == id);
+            var product = await _ProductService.GetCreateProductByIdAsync(id);
 
-            if (product == null)
+            if(product == null)
             {
                 return NotFound();
             }
-
-            return Ok(ToProductResponse(product));
+            return Ok(product);
         }
 
         [HttpPost]
         public async Task<IActionResult> CreateProduct([FromBody] CreateProductRequest request)
         {
-            var newProduct = new Product
-            {
-                Name = request.Name,
-                Price = request.Price
-            };
+            var createdProduct = await _ProductService.CreateProductAsync(request);
 
-            _context.Products.Add(newProduct);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetProductById), new { id = newProduct.Id }, ToProductResponse(newProduct));
+            return CreatedAtAction(nameof(GetProductById), new { id = createdProduct.Id}, createdProduct);
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateProduct(int id, [FromBody] UpdateProductRequest request)
         {
-            var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == id);
+            var updateProduct = await _ProductService.UpdateProductAsync(id, request);
 
-            if (product == null)
+            if (updateProduct == null)
             {
                 return NotFound();
             }
-
-            UpdateProductInfo(product, request);
-
-            await _context.SaveChangesAsync();
-
-            return Ok(ToProductResponse(product));
+            return Ok(updateProduct);
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteProduct(int id)
+        public async Task<IActionResult> DeleteProductAsync(int id)
         {
-            var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == id);
+            var isDelete = await _ProductService.DeleteProductAsync(id);
 
-            if (product == null)
+            if (!isDelete)
             {
                 return NotFound();
             }
-
-            _context.Products.Remove(product);
-            await _context.SaveChangesAsync();
-
             return NoContent();
-        }
-
-        /// <summary>
-        /// 기존 상품 엔티티의 이름과 가격 정보를 수정합니다.
-        /// </summary>
-        /// <param name="product"> 수정 할 기존 상품 엔티티</param>
-        /// <param name="request"> 수정 할 상품 정보가 담긴 요청 DTO</param>
-        private void UpdateProductInfo(Product product, UpdateProductRequest request)
-        {
-            product.Name  = request.Name;
-            product.Price = request.Price;
-        }
-
-        /// <summary>
-        /// 상품 엔티티를 응답 DTO로 변환합니다.
-        /// </summary>
-        /// <param name="product">변환할 상품 엔티티</param>
-        /// <returns>상품 응답 DTO</returns>
-        private ProductResponse ToProductResponse(Product product)
-        {
-            return new ProductResponse
-            {
-                Id    = product.Id,
-                Name  = product.Name,
-                Price = product.Price
-            };
-        }
-
-        /// <summary>
-        /// 상품 엔티티 List를 응답 DTO List로 변환합니다.
-        /// </summary>
-        /// <param name="product">변환 할 상품 엔티티 목록</param>
-        /// <returns>상품 응답 DTO 목록</returns>
-        private List<ProductResponse> ToProductResponseList(List<Product> product)
-        {
-            return product.Select(product => ToProductResponse(product)).ToList();
         }
     }
 }
