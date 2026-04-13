@@ -61,30 +61,100 @@ SQLite
 ### ✔ Dependency Injection
 ```csharp
 builder.Services.AddScoped<IProductService, ProductService>();
+```
 👉 인터페이스 기반 설계 적용
 
-✔ Async Processing
+###✔ Async Processing
+```csharp
 await _context.Products.ToListAsync();
+```
 👉 비동기 처리로 성능 개선
 
-API Example
-GET /api/products
+## 📌 API Example
 
+### ✔ GET /api/products
 상품 목록 조회
 
-POST /api/products
-{
-  "name": "아메리카노",
-  "price": 1800
-}
+#### Response
+```json
+[
+  {
+    "id": 1,
+    "name": "아메리카노",
+    "price": 1800
+  },
+  {
+    "id": 2,
+    "name": "카페라떼",
+    "price": 2500
+  }
+]
+```
+### ✔ GET /api/products/{id}
+상품 단건 조회
 
-PUT /api/products/{id}
-{
-  "name": "수정된 상품",
-  "price": 2000
-}
+#### Response
+```json
+[
+  {
+    "id": 1,
+    "name": "아메리카노",
+    "price": 1800
+  }
+]
+```
+### ✔ POST /api/products
+상품 생성
 
-DELETE /api/products/{id}
+#### Request
+```json
+[
+  {
+    "name": "바닐라라떼",
+    "price": 3500
+  }
+]
+```
+#### Response
+```json
+[
+  {
+  "id": 3,
+  "name": "바닐라라떼",
+  "price": 3500
+  }
+]
+```
+### ✔ PUT /api/products
+상품 수정
+
+#### Request
+```json
+[
+  {
+    "name": "수정된 카페라떼",
+    "price": 2800
+  }
+]
+```
+#### Response
+```json
+[
+  {
+    "id": 2,
+    "name": "수정된 카페라떼",
+    "price": 2800
+  }
+]
+```
+
+###✔ DELETE /api/products/{id}
+상품 삭제
+
+#### Response
+```json
+ 204 No Content
+```
 
 📌 What I Learned
 RESTful API 설계 및 CRUD 구현
