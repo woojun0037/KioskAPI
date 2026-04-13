@@ -64,7 +64,7 @@ builder.Services.AddScoped<IProductService, ProductService>();
 ```
 👉 인터페이스 기반 설계 적용
 
-###✔ Async Processing
+### ✔ Async Processing
 ```csharp
 await _context.Products.ToListAsync();
 ```
