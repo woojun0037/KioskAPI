@@ -148,7 +148,7 @@ await _context.Products.ToListAsync();
 ]
 ```
 
-###✔ DELETE /api/products/{id}
+### ✔ DELETE /api/products/{id}
 상품 삭제
 
 #### Response
