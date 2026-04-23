@@ -41,7 +41,7 @@ namespace KioskApi.Controllers
             return Ok(product);
         }
 
-        [HttpPost]
+        [HttpPost] 
         public async Task<IActionResult> CreateProduct([FromBody] CreateProductRequest request)
         {
             var createdProduct = await _ProductService.CreateProductAsync(request);
