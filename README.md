@@ -1,4 +1,8 @@
 # 📖 Project Overview
+
+![KioskAPI](./assets/KioskAPI.gif)
+
+
 ASP.NET Core Web API와 Entity Framework Core를 사용하여  
 **상품 CRUD 기능을 제공하는 백엔드 서버를 구현한 프로젝트입니다.**
 
